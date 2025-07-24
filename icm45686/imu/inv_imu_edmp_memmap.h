@@ -522,7 +522,7 @@ extern "C" {
 
 /* double_tap_timing
  *
- * In case of double tap, indicate the sample count between the two detected pulses. Double tap timing in seconds is double_tap_timing / ACCEL_ODR_Hz.
+ * Number of samples between the two detected pulses right shifted by 4 (therefore, under 15 samples, value will be clamped to 0). Double tap timing in seconds is 16 * double_tap_timing / ACCEL_ODR_Hz.
  */
 #define EDMP_DOUBLE_TAP_TIMING                                  0x90
 #define EDMP_DOUBLE_TAP_TIMING_SIZE                             1
@@ -536,7 +536,7 @@ extern "C" {
 
 /* hard_iron_offset
  *
- * 3-dimension vector that is removed to magnetometer data.
+ * 3-dimension vector subtracted from magnetometer data.
  */
 #define EDMP_HARD_IRON_OFFSET                                   0x4b4
 #define EDMP_HARD_IRON_OFFSET_SIZE                              12

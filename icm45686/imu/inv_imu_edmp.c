@@ -748,15 +748,16 @@ int inv_imu_edmp_get_ff_data(inv_imu_device_t *s, uint16_t *freefall_duration)
 
 int inv_imu_edmp_get_tap_data(inv_imu_device_t *s, inv_imu_edmp_tap_data_t *data)
 {
-	int status = INV_IMU_OK;
+	int     status       = INV_IMU_OK;
+	uint8_t tap_duration = 0;
 
 	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_TAP_NUM, (uint8_t *)&(data->num));
 	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_TAP_AXIS, (uint8_t *)&(data->axis));
 	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_TAP_DIR, (uint8_t *)&(data->direction));
-	if (data->num == INV_IMU_EDMP_TAP_DOUBLE)
-		status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_DOUBLE_TAP_TIMING,
-		                                 (uint8_t *)&(data->double_tap_timing));
-	else
+	if (data->num == INV_IMU_EDMP_TAP_DOUBLE) {
+		status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_DOUBLE_TAP_TIMING, (uint8_t *)&tap_duration);
+		data->double_tap_timing = (uint16_t)tap_duration * 16;
+	} else
 		data->double_tap_timing = 0;
 
 	return status;

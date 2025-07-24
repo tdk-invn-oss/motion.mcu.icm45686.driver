@@ -204,7 +204,7 @@ typedef struct {
 	inv_imu_edmp_tap_num_t  num;
 	inv_imu_edmp_tap_axis_t axis;
 	inv_imu_edmp_tap_dir_t  direction;
-	uint8_t                 double_tap_timing;
+	uint16_t                double_tap_timing;
 } inv_imu_edmp_tap_data_t;
 
 /** @brief Configure EDMP Output Data Rate.
