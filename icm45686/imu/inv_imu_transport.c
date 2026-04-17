@@ -65,7 +65,7 @@ int inv_imu_write_sram(void *t, uint32_t addr, uint32_t len, const uint8_t *buf)
 
 static int read_dreg(inv_imu_transport_t *t, uint8_t reg, uint32_t len, uint8_t *buf)
 {
-	if (t->read_reg(reg, buf, len) != 0)
+	if (t->read_reg(t->context, reg, buf, len) != 0)
 		return INV_IMU_ERROR_TRANSPORT;
 
 	return INV_IMU_OK;
@@ -73,7 +73,7 @@ static int read_dreg(inv_imu_transport_t *t, uint8_t reg, uint32_t len, uint8_t 
 
 static int write_dreg(inv_imu_transport_t *t, uint8_t reg, uint32_t len, const uint8_t *buf)
 {
-	if (t->write_reg(reg, buf, len) != 0)
+	if (t->write_reg(t->context, reg, buf, len) != 0)
 		return INV_IMU_ERROR_TRANSPORT;
 
 	return INV_IMU_OK;

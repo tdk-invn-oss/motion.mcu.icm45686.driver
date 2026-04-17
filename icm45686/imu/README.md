@@ -110,6 +110,7 @@ inv_imu_device_t imu_dev;
 uint8_t          whoami;
 
 /* Transport layer initialization */
+imu_dev.transport.context    = 0; /* unused */
 imu_dev.transport.read_reg   = si_io_imu_read_reg;
 imu_dev.transport.write_reg  = si_io_imu_write_reg;
 imu_dev.transport.sleep_us   = si_sleep_us;
@@ -144,6 +145,7 @@ inv_imu_device_t   imu_dev;
 inv_imu_adv_var_t *e = (inv_imu_adv_var_t *)imu_dev.adv_var;
 
 /* Transport layer initialization */
+imu_dev.transport.context    = 0; /* unused */
 imu_dev.transport.read_reg   = si_io_imu_read_reg;
 imu_dev.transport.write_reg  = si_io_imu_write_reg;
 imu_dev.transport.sleep_us   = si_sleep_us;

@@ -32,20 +32,22 @@ extern "C" {
 #include <stdint.h>
 
 /** @brief Function pointer to read register(s).
- *  @param[in] reg   Register address to be read.
- *  @param[out] buf  Output data from the register.
- *  @param[in] len   Number of byte to be read.
- *  @return          0 on success, negative value on error.
+ *  @param[in] context  Pointer to context.
+ *  @param[in] reg      Register address to be read.
+ *  @param[out] buf     Output data from the register.
+ *  @param[in] len      Number of byte to be read.
+ *  @return             0 on success, negative value on error.
  */
-typedef int (*inv_imu_read_reg_t)(uint8_t reg, uint8_t *buf, uint32_t len);
+typedef int (*inv_imu_read_reg_t)(void *context, uint8_t reg, uint8_t *buf, uint32_t len);
 
 /** @brief Function pointer to write register(s).
- *  @param[in] reg  Register address to be written.
- *  @param[in] buf  Input data to write.
- *  @param[in] len  Number of byte to be written.
- *  @return         0 on success, negative value on error.
+ *  @param[in] context  Pointer to context.
+ *  @param[in] reg      Register address to be written.
+ *  @param[in] buf      Input data to write.
+ *  @param[in] len      Number of byte to be written.
+ *  @return             0 on success, negative value on error.
  */
-typedef int (*inv_imu_write_reg_t)(uint8_t reg, const uint8_t *buf, uint32_t len);
+typedef int (*inv_imu_write_reg_t)(void *context, uint8_t reg, const uint8_t *buf, uint32_t len);
 
 /* Available serial interface type. */
 #define UI_I2C  0 /**< identifies I2C interface. */
@@ -61,6 +63,7 @@ typedef uint32_t inv_imu_serif_type_t;
 /** @brief Structure dedicated to transport layer transport interface. */
 typedef struct {
 	/* Serial interface variables (should be initialized by application) */
+	void *              context;
 	inv_imu_read_reg_t  read_reg; /**< Function pointer to read register(s). */
 	inv_imu_write_reg_t write_reg; /**< Function pointer to write register(s). */
 	uint32_t            serif_type; /**< Serial interface type. */
@@ -69,6 +72,7 @@ typedef struct {
 	 *  @param[in] us  Time to sleep in microseconds.
 	 */
 	void (*sleep_us)(uint32_t us);
+
 } inv_imu_transport_t;
 
 /** @brief Reads data from a register on IMU.

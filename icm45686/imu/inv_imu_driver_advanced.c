@@ -66,16 +66,10 @@ int inv_imu_adv_device_reset(inv_imu_device_t *s)
 
 	status |= inv_imu_soft_reset(s);
 
-	/* Read endianness for further processing */
-	status |= inv_imu_get_endianness(s); /* Set `endianness_data` variable */
-
 	/* Set default FIFO configuration */
 	e->fifo_is_used = INV_IMU_DISABLE; /* FIFO disabled by default */
 	e->fifo_comp_en = INV_IMU_DISABLE; /* FIFO compression disabled by default */
 	e->fifo_mode    = FIFO_CONFIG0_FIFO_MODE_BYPASS; /* FIFO in BYPASS by default */
-
-	/* From driver layer */
-	s->fifo_frame_size = 0; /* Init at 0 by default */
 
 	/* Initialize FIFO compression variables */
 	status |= init_fifo_compression(s);
@@ -397,7 +391,7 @@ int inv_imu_adv_get_data_from_registers(inv_imu_device_t *s)
  *  @param[in] s      Pointer to device.
  *  @param[in] frame  Data to parse.
  */
-static int parse_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
+static int parse_fifo_frame(inv_imu_device_t *s, const uint8_t *frame)
 {
 	int                      status    = INV_IMU_OK;
 	const inv_imu_adv_var_t *e         = (const inv_imu_adv_var_t *)s->adv_var;
@@ -489,29 +483,25 @@ static int parse_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
 			event.sensor_mask |= (1 << INV_SENSOR_FSYNC_EVENT);
 	}
 
-	if (header->bits.accel_bit) {
-		if ((event.accel[0] != INVALID_VALUE_FIFO) && (event.accel[1] != INVALID_VALUE_FIFO) &&
-		    (event.accel[2] != INVALID_VALUE_FIFO)) {
-			event.sensor_mask |= (1 << INV_SENSOR_ACCEL);
+	if (header->bits.accel_bit && (event.accel[0] != INVALID_VALUE_FIFO) &&
+	    (event.accel[1] != INVALID_VALUE_FIFO) && (event.accel[2] != INVALID_VALUE_FIFO)) {
+		event.sensor_mask |= (1 << INV_SENSOR_ACCEL);
 
-			if (header->bits.twentybits_bit && !fifo_32bytes) {
-				event.accel_high_res[0] = (frame[0 + frame_idx] >> 4) & 0xF;
-				event.accel_high_res[1] = (frame[1 + frame_idx] >> 4) & 0xF;
-				event.accel_high_res[2] = (frame[2 + frame_idx] >> 4) & 0xF;
-			}
+		if (header->bits.twentybits_bit && !fifo_32bytes) {
+			event.accel_high_res[0] = (frame[0 + frame_idx] >> 4) & 0xF;
+			event.accel_high_res[1] = (frame[1 + frame_idx] >> 4) & 0xF;
+			event.accel_high_res[2] = (frame[2 + frame_idx] >> 4) & 0xF;
 		}
 	}
 
-	if (header->bits.gyro_bit) {
-		if ((event.gyro[0] != INVALID_VALUE_FIFO) && (event.gyro[1] != INVALID_VALUE_FIFO) &&
-		    (event.gyro[2] != INVALID_VALUE_FIFO)) {
-			event.sensor_mask |= (1 << INV_SENSOR_GYRO);
+	if (header->bits.gyro_bit && (event.gyro[0] != INVALID_VALUE_FIFO) &&
+	    (event.gyro[1] != INVALID_VALUE_FIFO) && (event.gyro[2] != INVALID_VALUE_FIFO)) {
+		event.sensor_mask |= (1 << INV_SENSOR_GYRO);
 
-			if (header->bits.twentybits_bit && !fifo_32bytes) {
-				event.gyro_high_res[0] = (frame[0 + frame_idx]) & 0xF;
-				event.gyro_high_res[1] = (frame[1 + frame_idx]) & 0xF;
-				event.gyro_high_res[2] = (frame[2 + frame_idx]) & 0xF;
-			}
+		if (header->bits.twentybits_bit && !fifo_32bytes) {
+			event.gyro_high_res[0] = (frame[0 + frame_idx]) & 0xF;
+			event.gyro_high_res[1] = (frame[1 + frame_idx]) & 0xF;
+			event.gyro_high_res[2] = (frame[2 + frame_idx]) & 0xF;
 		}
 	}
 
@@ -527,7 +517,7 @@ static int parse_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
  *  @param[in] frame      Data to parse.
  *  @param[in] event_num  Event number to decode.
  */
-static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t event_num)
+static int decode_compressed_event(inv_imu_device_t *s, const uint8_t *frame, uint8_t event_num)
 {
 	int                       status        = INV_IMU_OK;
 	inv_imu_adv_var_t *       e             = (inv_imu_adv_var_t *)s->adv_var;
@@ -538,6 +528,8 @@ static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t 
 	int8_t                    diff_s1[3];
 	int8_t                    diff_s2;
 	inv_imu_sensor_event_t    event;
+	int                       a_is_valid;
+	int                       g_is_valid;
 
 	event.sensor_mask = 0;
 
@@ -660,9 +652,12 @@ static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t 
 		return INV_IMU_ERROR_BAD_ARG;
 	}
 
+	a_is_valid = decode_header->bits.valid_samples_a & validity_mask;
+	g_is_valid = decode_header->bits.valid_samples_g & validity_mask;
+
 	/* Accel */
 	if (comp_header->bits.accel_bit) /* accel_en */ {
-		if ((decode_header->bits.valid_samples_a & validity_mask) && e->accel_baseline_found) {
+		if (a_is_valid && e->accel_baseline_found) {
 			/* Reconstruct accel data */
 			event.accel[0] = e->accel_baseline[0] + diff_s0[0];
 			event.accel[1] = e->accel_baseline[1] + diff_s0[1];
@@ -685,7 +680,7 @@ static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t 
 
 	/* Gyro */
 	if (comp_header->bits.gyro_bit) /* gyro_en */ {
-		if ((decode_header->bits.valid_samples_g & validity_mask) && e->gyro_baseline_found) {
+		if (g_is_valid && e->gyro_baseline_found) {
 			/* 
 			 * Reconstruct gyro data 
 			 * Use `s1` if accel is also enabled, otherwise, use `s0`
@@ -716,19 +711,16 @@ static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t 
 	 * In compressed frames, temperature is only available if accel and gyro are enabled 
 	 */
 	event.temperature = INVALID_VALUE_FIFO_1B;
-	if (comp_header->bits.accel_bit && comp_header->bits.gyro_bit) /* accel_en + gyro_en */ {
-		if (((decode_header->bits.valid_samples_a & validity_mask) ||
-		     (decode_header->bits.valid_samples_g & validity_mask)) &&
-		    e->temp_baseline_found) {
-			/* Reconstruct temp data */
-			event.temperature = e->temp_baseline + diff_s2;
+	if ((comp_header->bits.accel_bit && comp_header->bits.gyro_bit) /* accel_en + gyro_en */
+	    && (a_is_valid || g_is_valid) && e->temp_baseline_found) {
+		/* Reconstruct temp data */
+		event.temperature = e->temp_baseline + diff_s2;
 
-			/* Set `sensor_mask` */
-			event.sensor_mask |= (1 << INV_SENSOR_TEMPERATURE);
+		/* Set `sensor_mask` */
+		event.sensor_mask |= (1 << INV_SENSOR_TEMPERATURE);
 
-			/* Update baseline for next event */
-			e->temp_baseline = event.temperature;
-		}
+		/* Update baseline for next event */
+		e->temp_baseline = event.temperature;
 	}
 
 	/* Notify event */
@@ -743,7 +735,7 @@ static int decode_compressed_event(inv_imu_device_t *s, uint8_t *frame, uint8_t 
  *  @param[in] s      Pointer to device.
  *  @param[in] frame  Data to parse.
  */
-static int parse_compressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
+static int parse_compressed_fifo_frame(inv_imu_device_t *s, const uint8_t *frame)
 {
 	int status = INV_IMU_OK;
 
@@ -763,7 +755,7 @@ static int parse_compressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
  *  @param[in] s      Pointer to device.
  *  @param[in] frame  Data to parse.
  */
-static int parse_uncompressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
+static int parse_uncompressed_fifo_frame(inv_imu_device_t *s, const uint8_t *frame)
 {
 	int                    status    = INV_IMU_OK;
 	inv_imu_adv_var_t *    e         = (inv_imu_adv_var_t *)s->adv_var;
@@ -789,9 +781,9 @@ static int parse_uncompressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
 		 * Do not use `FORMAT_16_BITS_DATA` as endianness is forced 
 		 * to little endian when compression is enabled 
 		 */
-		event.accel[0] = frame[1 + frame_idx] << 8 | frame[0 + frame_idx];
-		event.accel[1] = frame[3 + frame_idx] << 8 | frame[2 + frame_idx];
-		event.accel[2] = frame[5 + frame_idx] << 8 | frame[4 + frame_idx];
+		event.accel[0] = (int16_t)(frame[1 + frame_idx] << 8 | frame[0 + frame_idx]);
+		event.accel[1] = (int16_t)(frame[3 + frame_idx] << 8 | frame[2 + frame_idx]);
+		event.accel[2] = (int16_t)(frame[5 + frame_idx] << 8 | frame[4 + frame_idx]);
 		frame_idx += ACCEL_DATA_SIZE;
 
 		if ((event.accel[0] != INVALID_VALUE_FIFO) && (event.accel[1] != INVALID_VALUE_FIFO) &&
@@ -813,9 +805,9 @@ static int parse_uncompressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
 		 * Do not use `FORMAT_16_BITS_DATA` as endianness is forced 
 		 * to little endian when compression is enabled 
 		 */
-		event.gyro[0] = frame[1 + frame_idx] << 8 | frame[0 + frame_idx];
-		event.gyro[1] = frame[3 + frame_idx] << 8 | frame[2 + frame_idx];
-		event.gyro[2] = frame[5 + frame_idx] << 8 | frame[4 + frame_idx];
+		event.gyro[0] = (int16_t)(frame[1 + frame_idx] << 8 | frame[0 + frame_idx]);
+		event.gyro[1] = (int16_t)(frame[3 + frame_idx] << 8 | frame[2 + frame_idx]);
+		event.gyro[2] = (int16_t)(frame[5 + frame_idx] << 8 | frame[4 + frame_idx]);
 		frame_idx += GYRO_DATA_SIZE;
 
 		if ((event.gyro[0] != INVALID_VALUE_FIFO) && (event.gyro[1] != INVALID_VALUE_FIFO) &&
@@ -845,7 +837,7 @@ static int parse_uncompressed_fifo_frame(inv_imu_device_t *s, uint8_t *frame)
 
 	if ((header->bits.accel_bit) && (header->bits.gyro_bit)) {
 		/* Timestamp is available in frame */
-		event.timestamp_fsync = frame[1 + frame_idx] << 8 | frame[0 + frame_idx];
+		event.timestamp_fsync = (uint16_t)(frame[1 + frame_idx] << 8 | frame[0 + frame_idx]);
 		frame_idx += FIFO_TS_FSYNC_SIZE;
 	}
 

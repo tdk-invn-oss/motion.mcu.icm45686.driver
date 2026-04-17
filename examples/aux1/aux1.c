@@ -215,7 +215,8 @@ static int setup_mcu()
 	/* Override enable for AUX2_ENABLE with value 0 to disable AUX2 */
 	ioc_pad_scenario_aux_ovrd.aux2_enable_ovrd     = 1;
 	ioc_pad_scenario_aux_ovrd.aux2_enable_ovrd_val = 0;
-	rc |= si_io_imu_write_reg(IOC_PAD_SCENARIO_AUX_OVRD, (uint8_t *)&ioc_pad_scenario_aux_ovrd, 1);
+	rc |=
+	    si_io_imu_write_reg(0, IOC_PAD_SCENARIO_AUX_OVRD, (uint8_t *)&ioc_pad_scenario_aux_ovrd, 1);
 #endif
 
 	/* Initialize serial interface between MCU and IMU */
@@ -232,6 +233,7 @@ static int setup_imu()
 	inv_imu_int_pin_config_t int_pin_config;
 
 	/* Init transport layer */
+	aux_dev.context    = 0; /* unused */
 	aux_dev.read_reg   = si_io_imu_read_reg;
 	aux_dev.write_reg  = si_io_imu_write_reg;
 	aux_dev.serif_type = SERIF_TYPE;

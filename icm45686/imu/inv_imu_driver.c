@@ -49,6 +49,12 @@ int inv_imu_soft_reset(inv_imu_device_t *s)
 	/* Restore INTF_CONFIG1_OVRD register */
 	status |= inv_imu_write_reg(s, INTF_CONFIG1_OVRD, 1, (uint8_t *)&intf_config1_ovrd);
 
+	/* Reset driver internal states */
+	s->fifo_frame_size = 0; /* Init at 0 by default */
+
+	/* Read and set endianness for further processing */
+	status |= inv_imu_get_endianness(s);
+
 	/* Clear the RESET_DONE interrupt */
 	status |= inv_imu_read_reg(s, INT1_STATUS0, 1, (uint8_t *)&int1_status0);
 	if (int1_status0.int1_status_reset_done != 1)

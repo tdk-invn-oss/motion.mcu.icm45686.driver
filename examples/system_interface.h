@@ -33,10 +33,8 @@ int si_board_init(void);
  * UART
  */
 
-#define SI_UART_ID_FTDI 0
-#define SI_UART_ID_EDBG 1
-
-typedef uint32_t inv_uart_num_t;
+/** @brief UART id available */
+typedef enum { SI_UART_ID_FTDI, SI_UART_ID_EDBG } si_uart_id_t;
 
 /** @brief Configure UART to transmit characters.
  *         Baudrate: 921600
@@ -45,7 +43,7 @@ typedef uint32_t inv_uart_num_t;
  *  @param[in] level  Trace level (enum inv_msg_level).
  *  @return        0 on success, negative value on error.
  */
-int si_config_uart_for_print(inv_uart_num_t id, int level);
+int si_config_uart_for_print(si_uart_id_t id, int level);
 
 /** @brief Configure UART to transmit binary data.
  *         Baudrate: 2000000
@@ -53,14 +51,14 @@ int si_config_uart_for_print(inv_uart_num_t id, int level);
  *  @param[in] id  UART to configure.
  *  @return        0 on success, negative value on error.
  */
-int si_config_uart_for_bin(inv_uart_num_t id);
+int si_config_uart_for_bin(si_uart_id_t id);
 
 /** @brief Get user command from UART.
  *  @param[in] id    UART to read from.
  *  @param[out] cmd  User command if one has been sent, 0 otherwise.
  *  @return          0 on success, negative value on error.
  */
-int si_get_uart_command(inv_uart_num_t id, char *cmd);
+int si_get_uart_command(si_uart_id_t id, char *cmd);
 
 /* 
  * I/O for IMU device 
@@ -73,20 +71,22 @@ int si_get_uart_command(inv_uart_num_t id, char *cmd);
 int si_io_imu_init(inv_imu_serif_type_t serif_type);
 
 /** @brief Read register(s) implementation for IMU device.
- *  @param[in] reg   Register address to be read.
- *  @param[out] buf  Output data from the register.
- *  @param[in] len   Number of byte to be read.
- *  @return          0 on success, negative value on error.
+ *  @param[in] context  Pointer to context.
+ *  @param[in] reg      Register address to be read.
+ *  @param[out] buf     Output data from the register.
+ *  @param[in] len      Number of byte to be read.
+ *  @return             0 on success, negative value on error.
  */
-int si_io_imu_read_reg(uint8_t reg, uint8_t *buf, uint32_t len);
+int si_io_imu_read_reg(void *context, uint8_t reg, uint8_t *buf, uint32_t len);
 
 /** @brief Write register(s) implementation for IMU device.
- *  @param[in] reg  Register address to be written.
- *  @param[in] buf  Input data to write.
- *  @param[in] len  Number of byte to be written.
- *  @return         0 on success, negative value on error.
+ *  @param[in] context  Pointer to context.
+ *  @param[in] reg      Register address to be written.
+ *  @param[in] buf      Input data to write.
+ *  @param[in] len      Number of byte to be written.
+ *  @return             0 on success, negative value on error.
  */
-int si_io_imu_write_reg(uint8_t reg, const uint8_t *buf, uint32_t len);
+int si_io_imu_write_reg(void *context, uint8_t reg, const uint8_t *buf, uint32_t len);
 
 /* 
  * Timers 
@@ -111,15 +111,18 @@ uint64_t si_get_time_us();
  * GPIO
  */
 
-#define SI_GPIO_INT1 0
-#define SI_GPIO_INT2 1
+/** @brief GPIO id */
+typedef enum {
+	SI_GPIO_INT1,
+	SI_GPIO_INT2 /* GPIO connected to FSYNC if any */
+} si_gpio_id_t;
 
 /** @brief Initializes GPIO module to trigger callback when interrupt from IMU fires.
  *  @param[in] int_num  Interrupt pin (`SI_GPIO_INT1` or `SI_GPIO_INT2`).
  *  @param[in] int_cb   Callback to be called when interrupt fires.
  *  @return             0 on success, negative value on error.
  */
-int si_init_gpio_int(unsigned int_num, void (*int_cb)(void *context, unsigned int_num));
+int si_init_gpio_int(si_gpio_id_t id, void (*int_cb)(void *context, unsigned int_num));
 
 /** @brief Initializes GPIO module to initializes FSYNC output pin and trigger callback at
  *         a given frequency to allow user to toggle FSYNC pin at regular interval to emulate 

@@ -36,20 +36,20 @@ int si_board_init(void)
 /* 
  * UART 
  */
-int si_config_uart_for_print(inv_uart_num_t id, int level)
+int si_config_uart_for_print(si_uart_id_t id, int level)
 {
 	(void)id;
 	(void)level;
 	return 0;
 }
 
-int si_config_uart_for_bin(inv_uart_num_t id)
+int si_config_uart_for_bin(si_uart_id_t id)
 {
 	(void)id;
 	return 0;
 }
 
-int si_get_uart_command(inv_uart_num_t id, char *cmd)
+int si_get_uart_command(si_uart_id_t id, char *cmd)
 {
 	(void)id;
 	(void)cmd;
@@ -65,16 +65,18 @@ int si_io_imu_init(inv_imu_serif_type_t serif_type)
 	return 0;
 }
 
-int si_io_imu_read_reg(uint8_t reg, uint8_t *buf, uint32_t len)
+int si_io_imu_read_reg(void *context, uint8_t reg, uint8_t *buf, uint32_t len)
 {
+	(void)context;
 	(void)reg;
 	(void)buf;
 	(void)len;
 	return 0;
 }
 
-int si_io_imu_write_reg(uint8_t reg, const uint8_t *buf, uint32_t len)
+int si_io_imu_write_reg(void *context, uint8_t reg, const uint8_t *buf, uint32_t len)
 {
+	(void)context;
 	(void)reg;
 	(void)buf;
 	(void)len;
@@ -102,9 +104,9 @@ uint64_t si_get_time_us()
 /*
  * GPIO
  */
-int si_init_gpio_int(unsigned int_num, void (*int_cb)(void *context, unsigned int_num))
+int si_init_gpio_int(si_gpio_id_t id, void (*int_cb)(void *context, unsigned int_num))
 {
-	(void)int_num;
+	(void)id;
 	(void)int_cb;
 	return 0;
 }

@@ -79,7 +79,7 @@ static int set_selftest_parameters(inv_imu_device_t *                   s,
 	rc |= inv_imu_adv_power_up_sram(s);
 
 	init_en = (st_params->accel_en || st_params->gyro_en);
-	tmp_stc_params |= (init_en ? SELFTESTCAL_INIT_EN : SELFTESTCAL_INIT_DIS);
+	tmp_stc_params |= (init_en ? SELFTEST_INIT_EN : SELFTEST_INIT_DIS);
 	tmp_stc_params |= (st_params->accel_en ? SELFTEST_ACCEL_EN : SELFTEST_ACCEL_DIS);
 	tmp_stc_params |= (st_params->gyro_en ? SELFTEST_GYRO_EN : SELFTEST_GYRO_DIS);
 	tmp_stc_params |= (uint32_t)(st_params->accel_limit & SELFTEST_ACCEL_THRESH_MASK);

@@ -5,11 +5,9 @@ It gathers accelerometer and/or gyroscope data when data ready fires INT2.
 
 ## Specific wiring
 
-### If IMU EVB is used
-
 To allow IMU EVB AUX ports to be driven by SmartMotion board MCU, IMU EVB must not be plugged on SmartMotion CN1 but through wires instead :
 
-| **IMU pin**     | **SmartMotion pin** | **IMU EVB pin** |
+| **Function**    | **SmartMotion pin** | **IMU EVB pin** |
 | :-----:         | :----:              | :-----:         |
 | AUX1_CS         | J4.1                | CN2.9           |
 | AUX1_SCLK       | J4.2                | CN2.7           |
@@ -17,9 +15,6 @@ To allow IMU EVB AUX ports to be driven by SmartMotion board MCU, IMU EVB must n
 | AUX1_SDO        | J4.4                | CN2.5           |
 | INT2            | J4.6                | CN3.5           |
 | GND             | J4.7                | CN2.10          |
-
-| **Function**    | **SmartMotion pin** | **IMU EVB pin** |
-| :-----:         | :----:              | :-----:         |
 | 5V              | CN1.19              | CN2.4           |
 
 Please also make sure EVB jumper J1 closes 3-5 and 4-6
@@ -37,34 +32,7 @@ Please also make sure SmartMotion jumper J1 closes 5-6 and 7-8 (`Mag I2C` config
 
 \endif
 
-### If IMU DB is used
-
-To allow IMU DB AUX ports to be driven by SmartMotion board MCU, IMU DB must not be plugged on SmartMotion CN4/CN5 but through wires instead :
-
-| **IMU pin**     | **SmartMotion pin** | **IMU DB pin** |
-| :-----:         | :----:              | :-----:        |
-| AUX1_CS         | J4.1                | CN4.4          |
-| AUX1_SCLK       | J4.2                | CN4.5          |
-| AUX1_SDIO       | J4.3                | CN4.3          |
-| AUX1_SDO        | J4.4                | CN4.2          |
-| INT2            | J4.6                | CN5.2          |
-| GND             | J4.7                | CN4.10         |
-| VDD             | CN5.10              | CN5.10         |
-| VDDIO           | CN4.9               | CN4.9          |
-
-
-\if icm45631
-
-As ICM-45631 is triple interface by default, only SPI3 is supported on AUX1 interface at POR. UI link must then be set up to disable AUX2 prior to any AUX1 operation, hence making SPI4 available on AUX1 interface.
-
-| **IMU pin**     | **SmartMotion pin** | **IMU DB pin** |
-| :-----:         | :----:              | :-----:        |
-| AP_SDA          | CN2.3               | CN5.4          |
-| AP_SCL          | CN2.5               | CN5.6          |
-
-Please also make sure SmartMotion jumper J1 closes 5-6 and 7-8 (`Mag I2C` configuration)
-
-\endif
+![](img/hardware_connection_for_aux1.jpg)
 
 ## Command interface
 

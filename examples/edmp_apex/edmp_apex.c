@@ -256,6 +256,7 @@ static int setup_imu()
 	inv_imu_int_state_t      int_config;
 
 	/* Init transport layer */
+	imu_dev.transport.context    = 0; /* unused */
 	imu_dev.transport.read_reg   = si_io_imu_read_reg;
 	imu_dev.transport.write_reg  = si_io_imu_write_reg;
 	imu_dev.transport.serif_type = SERIF_TYPE;
@@ -263,15 +264,6 @@ static int setup_imu()
 
 	/* Wait 3 ms to ensure device is properly supplied  */
 	si_sleep_us(3000);
-
-	/* In SPI, configure slew-rate to prevent bus corruption on DK-SMARTMOTION-REVG */
-	if (imu_dev.transport.serif_type == UI_SPI3 || imu_dev.transport.serif_type == UI_SPI4) {
-		drive_config0_t drive_config0;
-		drive_config0.pads_spi_slew = DRIVE_CONFIG0_PADS_SPI_SLEW_TYP_10NS;
-		rc |= inv_imu_write_reg(&imu_dev, DRIVE_CONFIG0, 1, (uint8_t *)&drive_config0);
-		SI_CHECK_RC(rc);
-		si_sleep_us(2); /* Takes effect 1.5 us after the register is programmed */
-	}
 
 	/* Check whoami */
 	rc |= inv_imu_get_who_am_i(&imu_dev, &whoami);
